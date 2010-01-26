@@ -1,0 +1,12 @@
+require "rubygems"
+require "rubygame"
+require "lib/sea.rb"
+require "lib/utils.rb"
+require "lib/gui.rb"
+
+include Rubygame
+include Rubygame::Events
+include Rubygame::Events::EventActions
+include Rubygame::Events::EventTriggers
+
+Surface.autoload_dirs = "./gfx"
