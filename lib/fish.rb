@@ -1,3 +1,4 @@
+require 'lib/drop_line.rb'
 require 'lib/utils.rb'
 
 include Rubygame
@@ -10,20 +11,33 @@ class Fish
   include EventHandler::HasEventHandler
   include Sprites::Sprite
 
-  def initialize(x)
+  attr_reader :x, :column, :pos
+
+  def initialize(x, column)
+    @x = x
+    @column = column
     @flick_book = Circle.new
     @flick_book.push Surface["fish_open.png"]
     @flick_book.push Surface["fish_closed.png"]
     @image = @flick_book.next
-    @rect = [(x-(@image.w / 2)),BOTTOM_POS_Y,*@image.size]
+    @rect = Rect.new([(x-(@image.w / 2)),BOTTOM_POS_Y,*@image.size])
     @pos = 0
+  end
+
+  def catchable?
+    @pos >= MAX_POS
+  end
+
+  def catch
+    puts "Caught @fish#{@column}" 
   end
 
   def rise
     unless @pos >= MAX_POS then 
       @pos += 1
+    else
+      $game.queue << DropLine.new(@x, @column)
     end
-    puts "Fire an event to drop line" if @pos == MAX_POS
   end
   
   def feed

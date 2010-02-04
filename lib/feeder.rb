@@ -8,8 +8,11 @@ class Feeder
   include EventHandler::HasEventHandler
   include Sprites::Sprite
 
-  def initialize(x)
+  attr_accessor :x, :column
+
+  def initialize(x, column)
     @x = x
+    @column = column
     @tipping = 0
     @flick_book = Circle.new
     @flick_book.push Surface["feeder_still.png"]
@@ -17,7 +20,7 @@ class Feeder
     @flick_book.push Surface["feeder_tip_1.png"]
     @flick_book.push Surface["feeder_tip_0.png"]
     @image = @flick_book.next
-    @rect = [(x-(@image.w / 2)),POS_Y,*@image.size]
+    @rect = Rect.new([(x-(@image.w / 2)),POS_Y,*@image.size])
   end
 
   def tip
@@ -33,7 +36,7 @@ class Feeder
       @image = @flick_book.next
       @tipping -= 1
       puts "Fire Sweety!"
-      $game.queue << DropSweet.new(@x) if @tipping == 2
+      $game.queue << DropSweet.new(@x, @column) if @tipping == 2
     end
   end
 end
