@@ -1,3 +1,13 @@
-This is a fishy feeding game.
+This will be a fishy feeding game. It is intended to be played with a custom game controller based on an Atmel AVR microcontroller.
 
-It's not finished yet.
+Press q,w,e,r,t to feed the fish.
+
+To run:
+"ruby fishy.rb"
+
+
+TODO
+====
+Optimise screen blitting.
+Game Modes.
+Build controller.

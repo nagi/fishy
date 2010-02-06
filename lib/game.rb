@@ -1,45 +1,27 @@
 require 'rubygems'
 require 'rubygame'
 require 'lib/gui.rb'
-require 'lib/audio.rb'
-require 'lib/timer.rb'
-require 'lib/drop_sweet.rb'
-require 'lib/exiter.rb'
-require 'lib/gulp.rb'
-require 'lib/sea.rb'
-require 'lib/catch_fish.rb'
-require 'lib/hooked_fish.rb'
-require 'lib/fish.rb'
-require 'lib/line.rb'
-require 'lib/feeder.rb'
-require 'lib/sweet.rb'
-require 'lib/fish_fed.rb'
-
-include Rubygame
-include Rubygame::Events
-include Rubygame::EventActions
-include Rubygame::EventTriggers
-
-$stdout.sync = true
-
-Surface.autoload_dirs = [ File.join(Dir.pwd,"gfx") ]
-Music.autoload_dirs = [ File.join(Dir.pwd,"audio") ]
-Sound.autoload_dirs = [ File.join(Dir.pwd,"audio") ]
-Rubygame.init()
-
 class Game
   include EventHandler::HasEventHandler
   
-  attr_reader :clock, :queue, :gui
+  attr_reader :clock, :queue, :gui, :stats
 
-  def initialize
-    setup_gui
+  MENU_STATE = 0
+  GAME_STATE = 1
+  GAMEOVER_STATE = 2
+
+  def initialize(screen)
+    @state = MENU_STATE
+    @difficulty = :unset
+    setup_menu(screen)
+    setup_gui(screen)
     setup_audio
     setup_hooks
     setup_timers
     setup_clock
     setup_queue
-    setup_exiter
+    setup_stats
+    #setup_exiter
   end
 
   def go
@@ -55,25 +37,74 @@ class Game
     throw :quit
   end 
 
+  def start_game(difficulty)
+    @stats.difficulty = difficulty
+    @state = GAME_STATE
+    setup_exiter(difficulty)
+  end
+
+  def restart_game
+    $game = Game.new(@screen)
+    $game.go
+  end
+
+  def stop_game(event)
+    @stats.why_ended = event.why
+    @state = GAMEOVER_STATE
+  end
+
   private
 
   def step
-    @queue.fetch_sdl_events
-    @queue << @clock.tick 
-    #puts @queue.to_yaml unless @queue.empty?
-    @queue.each do |event|
-      puts event unless event.class == ClockTicked
-      handle(event)
+    if(@state == GAME_STATE) then
+      @queue.fetch_sdl_events
+      @queue << @clock.tick 
+      #puts @queue.to_yaml unless @queue.empty?
+      @queue.each do |event|
+        puts event unless event.class == ClockTicked
+        if event.class == MousePressed || event.class == MouseReleased then
+          @queue.delete(event)
+        else
+          handle(event)
+        end
+      end
+    elsif(@state == MENU_STATE) then
+      @queue.each do | event |
+        if event.class == MousePressed 
+          handle(event)
+        else
+          @queue.delete(event)
+        end
+      end
+    elsif(@state == GAMEOVER_STATE) then
+      unless @results then
+        @results = Results.new(@screen, @stats)
+      end
+
+      @queue.each do | event |
+        if event.class == MouseReleased
+          handle(event)
+        else
+          @queue.delete(event)
+        end
+      end
+    else
+      raise 'Unimplemented state'
     end
   end
 
-  def setup_gui
-    @gui = Gui.new([800,600])
+  def setup_menu(screen)
+    @menu = Menu.new(screen)
+  end
+
+  def setup_gui(screen)
+    @screen = screen
+    @gui = Gui.new(@screen)
   end
 
   def setup_audio
     @audio = Audio.new("song.ogg")
-    @audio.play_music(0.2)
+    #@audio.play_music(0.2)
   end
 
   def setup_queue
@@ -84,7 +115,7 @@ class Game
 
   def setup_clock
     @clock = Clock.new()
-    @clock.target_framerate = 32
+    @clock.target_framerate = 50
     # Adjust the assumed granularity to match the system.
     # This helps minimize CPU usage on systems with clocks
     # that are more accurate than the default granularity.
@@ -96,22 +127,36 @@ class Game
   def setup_timers
     #@sea_timer = Timer.new(200)
     #@fish_timer = Timer.new(200)
-    @feeder_timer = Timer.new(10)
-    @ocean_timer = Timer.new(200)
-    @sweet_timer = Timer.new(10)
-    @line_timer = Timer.new(20)
+    @game_timer = Timer.new(25000)
+    @feeder_timer = Timer.new(20)
+    @ocean_timer = Timer.new(300)
+    @sweet_timer = Timer.new(20)
+    @line_timer = Timer.new(40)
+    @exiter_timer = Timer.new(40)
   end
 
-  def setup_exiter
-    @exiter = Exiter.new(@gui,[20,20],[40,240])
+  def setup_exiter(difficulty)
+    case difficulty
+    when :hard
+      @exiter = Exiter.new(@gui,[20,20],[40,240])
+    when :medium
+      @exiter = Exiter.new(@gui,[30,30],[60,440])
+    when :easy
+      @exiter = Exiter.new(@gui,[40,40],[80,640])
+    end
   end
   
+  def setup_stats
+    @stats = Stats.new
+  end
+
   def setup_hooks
     make_magic_hooks(
       {
         QuitRequested => :quit,
         :escape => :quit,
-        :tick => :timer
+        :tick => :timer,
+        GameOver => proc{ | owner,event | owner.stop_game(event) }
       }
     )
     make_magic_hooks_for(@gui,
@@ -133,23 +178,42 @@ class Game
     )
     make_magic_hooks_for(@exiter,
       {
-        FishFed => proc{ | owner, event | @exiter.feed_fish(event.column)},
+        FishHit => proc{ | owner, event | @exiter.feed_fish(event.column)},
         CatchFish => proc{ | owner, event | @exiter.catch_fish(event.column)}
       }
     )
+    make_magic_hooks_for(@stats,
+      {
+        FishFed => proc{ | owner, event | @stats.inc(event.what)},
+        WastedFood => proc{ | owner, event | @stats.inc(event.what)},
+        CatchFish => proc{ | owner, event | @stats.inc(event.what)}
+      }
+                        )
     make_magic_hooks_for(@audio,
       {
-        Gulp => proc{ @audio.gulp }
+        Gulp => proc{ @audio.gulp },
+        Click => proc{ @audio.click}
+      }
+    )
+    make_magic_hooks_for(@menu,
+      {
+        MousePressed => proc{ | owner, event | @menu.mouse_event(event)}
+      }
+    )
+    make_magic_hooks_for(@results,
+      {
+        MouseReleased => proc{ | owner, event | @results.mouse_event(event)},
       }
     )
   end
-  
+
   def timer(event)
-    @exiter.tick
-    @gui.screen.title = @clock.framerate.to_s unless @gui.screen.nil?
+    @gui.screen.title = @clock.framerate.round.to_s + ' Score = ' + @stats.score.to_s unless @gui.screen.nil?
+    $game.queue << GameOver.new(:completed) if @game_timer.add_time(event)
     @gui.sweet_anim_frame if @sweet_timer.add_time(event)
     @gui.feeder_anim_frame if @feeder_timer.add_time(event)
     @gui.ocean_anim_frame if @ocean_timer.add_time(event)
     @gui.line_anim_frame if @line_timer.add_time(event)
+    @exiter.tick if @exiter_timer.add_time(event)
   end
 end

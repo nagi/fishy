@@ -1,7 +1,7 @@
-class FishFed
+class WastedFood
   attr_accessor :column, :what
   def initialize(column)
-    @what = :fish_fed
+    @what = :wasted_food
     @column = column
   end
 end

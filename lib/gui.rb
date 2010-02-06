@@ -1,6 +1,3 @@
-require 'rubygems'
-require 'rubygame'
-
 include Rubygame
 include Rubygame::Events
 include Rubygame::EventActions
@@ -12,15 +9,14 @@ class Gui
   COLUMNS = [134, 267, 400, 533, 666, 799]
   include EventHandler::HasEventHandler
 
-  def initialize(size)
+  def initialize(screen)
+    @screen = screen
     @aquarium = Array.new
     @feeders = Array.new
     @sweet_shop = Array.new
     @lines = Array.new
     @hooked_fishes = Array.new
-    @screen = Screen.open(size)
-    @screen.colorkey = :black
-    setup_frames(size)
+    setup_frames(screen.size)
     setup_lines
     setup_fish
     setup_sea
@@ -96,8 +92,9 @@ class Gui
   def fish_feed(n)
     fish = @aquarium[n]
     if fish.pos == 0 then
-      puts "Wasted food" 
+      $game.queue << WastedFood.new(n)
     else
+      $game.queue << FishFed.new(n)
       $game.queue << Gulp.new
     end
     fish.feed
@@ -132,7 +129,10 @@ class Gui
     @lines[n].top
     fish_sink(n)
     @hooked_fishes << HookedFish.new(COLUMNS[n],n)
-    puts 'increment game stats - check for game over'
+
+    if $game.stats.score_board[:fish_lost] >= 2 then
+      $game.queue << GameOver.new(:too_many_dead_fish)
+    end
   end
 
   def feeder_anim_frame
@@ -150,7 +150,7 @@ class Gui
     @sweet_shop.each do |s|
       s.undraw(@back_frame,@background)
       if sweet_colliding?(s) then
-        $game.queue << FishFed.new(s.column)
+        $game.queue << FishHit.new(s.column)
         s.undraw(@back_frame,@background)
         @sweet_shop.delete(s)
       elsif s.bottom? then

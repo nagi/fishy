@@ -1,12 +1,8 @@
-require 'lib/utils.rb'
-
-include Rubygame
-
 class Feeder
   POS_Y = 23
 
-  include EventHandler::HasEventHandler
-  include Sprites::Sprite
+  include Rubygame::EventHandler::HasEventHandler
+  include Rubygame::Sprites::Sprite
 
   attr_accessor :x, :column
 

@@ -1,4 +1,6 @@
 *.swp
 gfx_master/
+audio_master/
+irbinc
 *.dia
 *.dia.autosave

@@ -1,6 +1,3 @@
-require 'lib/drop_line.rb'
-require 'lib/utils.rb'
-
 include Rubygame
 
 class Fish
