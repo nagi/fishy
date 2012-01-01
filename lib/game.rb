@@ -115,7 +115,7 @@ class Game
 
   def setup_clock
     @clock = Clock.new()
-    @clock.target_framerate = 50
+    @clock.target_framerate = 40
     # Adjust the assumed granularity to match the system.
     # This helps minimize CPU usage on systems with clocks
     # that are more accurate than the default granularity.
