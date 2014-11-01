@@ -1,6 +1,3 @@
-require 'rubygems'
-require 'rubygame'
-require 'lib/gui.rb'
 class Game
   include EventHandler::HasEventHandler
   

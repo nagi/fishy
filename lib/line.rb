@@ -1,6 +1,3 @@
-require 'lib/utils.rb'
-require 'lib/hook_line.rb'
-
 include Rubygame
 
 class Line

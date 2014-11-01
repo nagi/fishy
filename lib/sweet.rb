@@ -1,5 +1,3 @@
-require 'lib/utils.rb'
-
 include Rubygame
 
 class Sweet
