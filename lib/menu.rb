@@ -66,15 +66,3 @@ class Menu
     $game.start_game(@difficulty)
   end
 end
-
-
-#200 <-> 650
-#
-#60
-#|
-#
-#160
-#|
-#
-#250
-#|

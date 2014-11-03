@@ -26,17 +26,17 @@ class Fish
   end
 
   def catch
-    puts "Caught @fish#{@column}" 
+    puts "Caught @fish#{@column}"
   end
 
   def rise
-    unless @pos >= MAX_POS then 
+    unless @pos >= MAX_POS then
       @pos += 1
     else
       $game.queue << DropLine.new(@x, @column)
     end
   end
-  
+
   def feed
     @pos -= 1 if @pos == 1
     @pos -= 2 unless @pos < 2

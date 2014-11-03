@@ -5,12 +5,11 @@ class Exiter
     @timer = []
     @ticks_raise = raise
     @ticks_first_raise = first_raise
-    
     @gui = gui
     @aquarium = gui.aquarium
     reset_all_fish
   end
-    
+
   def tick
     @aquarium.each_with_index do |f,i|
       if(@timer[i] == 0)
@@ -26,7 +25,7 @@ class Exiter
     @gui.fish_feed(n)
     reset_fish_timer(n)
   end
-  
+
   def reset_fish_timer(n)
     if(@aquarium[n].pos == 0) then
       @timer[n] = random(@ticks_first_raise[0], @ticks_first_raise[1])
@@ -49,11 +48,11 @@ class Exiter
     @gui.catch_fish(n)
   end
 
-  def random(lower,higher)
+  def random(lower, higher)
     (lower + rand(higher-lower)).round
   end
 
-  def set_difficulty(raise,first_raise)
+  def set_difficulty(raise, first_raise)
     @ticks_raise = raise
     @ticks_first_raise = first_raise
   end

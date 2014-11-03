@@ -1,13 +1,18 @@
 class Audio
-  def initialize(song)
-    @song = Music[song]
-    @gulp = Sound["gulp.ogg"]
-    @click = Sound["click.ogg"]
+  def initialize
+    @song = Music["song.wav"]
+    @gulp = Sound["gulp.wav"]
+    @click = Sound["click.wav"]
   end
 
   def play_music(volume)
     @song.volume = volume
     @song.play
+  end
+
+  def stop_music
+    @song.stop
+    @song.rewind
   end
 
   def gulp

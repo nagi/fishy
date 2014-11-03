@@ -1,7 +1,7 @@
 class Game
   include EventHandler::HasEventHandler
-  
-  attr_reader :clock, :queue, :gui, :stats
+
+  attr_reader :clock, :queue, :gui, :stats, :audio
 
   MENU_STATE = 0
   GAME_STATE = 1
@@ -18,7 +18,6 @@ class Game
     setup_clock
     setup_queue
     setup_stats
-    #setup_exiter
   end
 
   def go
@@ -32,11 +31,12 @@ class Game
   def quit
     puts " *** Quit *** "
     throw :quit
-  end 
+  end
 
   def start_game(difficulty)
     @stats.difficulty = difficulty
     @state = GAME_STATE
+    @audio.play_music(1)
     setup_exiter(difficulty)
   end
 
@@ -46,7 +46,9 @@ class Game
   end
 
   def stop_game(event)
+    @audio.stop_music
     @stats.why_ended = event.why
+    puts event.why
     @state = GAMEOVER_STATE
   end
 
@@ -56,7 +58,6 @@ class Game
     if(@state == GAME_STATE) then
       @queue.fetch_sdl_events
       @queue << @clock.tick 
-      #puts @queue.to_yaml unless @queue.empty?
       @queue.each do |event|
         puts event unless event.class == ClockTicked
         if event.class == MousePressed || event.class == MouseReleased then
@@ -100,8 +101,7 @@ class Game
   end
 
   def setup_audio
-    @audio = Audio.new("song.ogg")
-    #@audio.play_music(0.2)
+    @audio = Audio.new
   end
 
   def setup_queue
@@ -124,7 +124,7 @@ class Game
   def setup_timers
     #@sea_timer = Timer.new(200)
     #@fish_timer = Timer.new(200)
-    @game_timer = Timer.new(25000)
+    @game_timer = Timer.new(159000)
     @feeder_timer = Timer.new(20)
     @ocean_timer = Timer.new(300)
     @sweet_timer = Timer.new(20)
@@ -135,14 +135,14 @@ class Game
   def setup_exiter(difficulty)
     case difficulty
     when :hard
-      @exiter = Exiter.new(@gui,[20,20],[40,240])
+      @exiter = Exiter.new(@gui,[12,12],[0,100])
     when :medium
-      @exiter = Exiter.new(@gui,[30,30],[60,440])
+      @exiter = Exiter.new(@gui,[16,16],[20,180])
     when :easy
-      @exiter = Exiter.new(@gui,[40,40],[80,640])
+      @exiter = Exiter.new(@gui,[20,20],[40,240])
     end
   end
-  
+
   def setup_stats
     @stats = Stats.new
   end
